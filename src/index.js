@@ -55,6 +55,7 @@ app.get("/todos", checksExistsUserAccount, (request, response) => {
 app.post("/todos", checksExistsUserAccount, (request, response) => {
   const { user } = request;
   const { title, deadline } = request.body;
+
   const todo = {
     id: uuid(),
     title,
@@ -70,23 +71,19 @@ app.post("/todos", checksExistsUserAccount, (request, response) => {
 
 app.put("/todos/:id", checksExistsUserAccount, (request, response) => {
   const { user } = request;
-  const { id } = request.params;
   const { title, deadline } = request.body;
+  const { id } = request.params;
 
   const { todos } = user;
 
-  const index = todos.findIndex((todo) => todo.id === id);
+  const todo = todos.find((todo) => todo.id === id);
 
-  if (index < 0) {
+  if (!todo) {
     return response.status(404).json({ error: "Todo not found" });
   }
 
-  const todo = todos[index];
-
   todo.title = title;
-  todo.deadline = deadline;
-
-  todos.splice(index, 1, todo);
+  todo.deadline = new Date(deadline);
 
   return response.status(200).json(todo);
 });
@@ -94,19 +91,16 @@ app.put("/todos/:id", checksExistsUserAccount, (request, response) => {
 app.patch("/todos/:id/done", checksExistsUserAccount, (request, response) => {
   const { user } = request;
   const { id } = request.params;
+
   const { todos } = user;
 
-  const index = todos.findIndex((todo) => todo.id === id);
+  const todo = todos.find((todo) => todo.id === id);
 
-  if (index < 0) {
+  if (!todo) {
     return response.status(404).json({ error: "Todo not found" });
   }
 
-  const todo = todos[index];
-
   todo.done = true;
-
-  todos.splice(index, 1, todo);
 
   return response.status(200).json(todo);
 });
@@ -118,13 +112,13 @@ app.delete("/todos/:id", checksExistsUserAccount, (request, response) => {
 
   const index = todos.findIndex((todo) => todo.id === id);
 
-  if (index < 0) {
+  if (index === -1) {
     return response.status(404).json({ error: "Todo not found" });
   }
 
   todos.splice(index, 1);
 
-  return response.status(204).send();
+  return response.status(204).json();
 });
 
 module.exports = app;
